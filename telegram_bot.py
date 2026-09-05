@@ -13,6 +13,7 @@ from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
+from telegram.helpers import escape_markdown
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -232,9 +233,12 @@ def build_order_summary(context: ContextTypes.DEFAULT_TYPE) -> tuple:
     for i in cart:
         summary += f"• {i['item']} × {i['qty']} = {i['qty']*i['price']:,} تومان\n"
     summary += f"\n*جمع کل: {total:,} تومان*\n"
-    summary += f"\n📞 تماس: {context.user_data['phone']}\n📍 آدرس: {context.user_data['address']}"
+    phone_safe = escape_markdown(context.user_data['phone'], version=1)
+    address_safe = escape_markdown(context.user_data['address'], version=1)
+    summary += f"\n📞 تماس: {phone_safe}\n📍 آدرس: {address_safe}"
     if is_high_value:
-        summary += f"\n🕒 ساعت حضور در منزل: {context.user_data.get('delivery_time', '-')}"
+        delivery_time_safe = escape_markdown(context.user_data.get('delivery_time', '-'), version=1)
+        summary += f"\n🕒 ساعت حضور در منزل: {delivery_time_safe}"
 
     return summary, total, is_high_value
 
@@ -288,7 +292,7 @@ async def confirm_order(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     if ADMIN_CHAT_ID:
         try:
             user = update.effective_user
-            full_name = user.full_name or "بدون نام"
+            full_name = escape_markdown(user.full_name or "بدون نام", version=1)
             username_line = f"@{user.username}" if user.username else "بدون یوزرنیم"
 
             title = "🆕 *سفارش جدید*"
